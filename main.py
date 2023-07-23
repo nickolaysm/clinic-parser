@@ -3,6 +3,10 @@ import camelot
 # Так импортируется PyMuPDF 
 import sys, fitz
 
+#OCR
+import easyocr
+
+
 class ConversionBackend(object):
     def convert(self, pdf_path, png_path):
         # Открываем документ
@@ -12,6 +16,13 @@ class ConversionBackend(object):
             pix = page.get_pixmap()  
             # Сохраняем
             pix.save(png_path)
+
+# easyOCR показал себя плохо
+# reader = easyocr.Reader(['ru'])
+# converter = ConversionBackend()
+# converter.convert("./resources/input.pdf", "./result/test.jpg")
+# result = reader.readtext('./result/test.jpg')
+# print(result)
 
 
 tables = camelot.read_pdf('./resources/input.pdf', 
