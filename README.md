@@ -32,3 +32,7 @@ pip install easyocr
 <pre>
 pip install --force-reinstall -v "Pillow==9.5.0"
 </pre>
+
+* Отличная статья про OCR
+
+https://medium.com/social-impact-analytics/extract-text-from-unsearchable-pdfs-for-data-analysis-using-python-a6a2ca0866dd

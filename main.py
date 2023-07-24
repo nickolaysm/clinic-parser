@@ -4,8 +4,25 @@ import camelot
 import sys, fitz
 
 #OCR
-import easyocr
+# import easyocr
 
+#For teaseract
+from PIL import Image
+import pytesseract
+
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+print(pytesseract.get_languages(config=''))
+
+image_path = "./result/test.jpg"
+img = Image.open(image_path)
+
+text = pytesseract.image_to_string(Image.open(image_path), lang='rus')
+# print(text)
+
+with open("./result/test.txt", "w", encoding="utf-8") as file:
+    file.writelines(text)
+
+# print(pytesseract.image_to_string(Image.open('./result/test.jpg')))
 
 class ConversionBackend(object):
     def convert(self, pdf_path, png_path):
