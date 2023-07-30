@@ -44,4 +44,26 @@ for date, value in dic.items():
         df.at[item[0], "Ед. измерения"] = item[2]
         df.at[item[0], "Референсное значение"] = item[3]
 
-print(df)
+print(df.at["Глутатионпероксидаза (селен)", "Ед. измерения"])
+
+
+#тест tuple
+class Key:
+    def __init__(self, date, name):
+        self.date = date
+        self.name = name
+
+class Value:
+    def __init__(self, name, value, measure):
+        self.name = name
+        self.date = date
+        self.name = name
+
+
+dic1 = {
+    ('01.01.2023', 'Тест1'): ('Тест1', '10', 'мг'),
+    ('01.01.2023', 'Тест2'): ('Тест2', '20', 'мл'),
+    ('02.01.2023', 'Тест1'): ('Тест1', '11', 'мг'),
+}
+
+print(dic1[('01.01.2023', 'Тест1')])
