@@ -1,7 +1,10 @@
+from datetime import datetime
 import os
 import fitz
 import re
 import camelot
+import pandas as pd
+import uuid
 
 # Библиотека ищет в заданном каталоге pdf файлы от ЭндоМедЛаб с текстом
 # Вытаскивает текст pdf и складывает результаты анализов в pandas DataFrame
@@ -10,7 +13,6 @@ import camelot
 # К колонках "Дата анализа х" собственно сами значения анализов по датам
 
 READABLE_PDF_PATH = "./readablepdf/"
-
 
 class AnalizTable:
     def __init__(self, date, name, value, measure, reference):
@@ -33,7 +35,8 @@ class ConversionBackend(object):
 
 
 # Возвращает двумерный массив:
-# ["Дата", "Тест", "Значение", "Ед. измерения", "Референсное значение"]
+# ["Дата", "Тест", "Значение", "Ед. измерения", "Референсное значение", "Группа анализов"]
+# Группа анализов - некоторое уникальное значение анализов из одного документа, что бы потом можно было вывести вместе
 def parse_table(analiz_date, file_name):
     tables = camelot.read_pdf(file_name,
                               backend=ConversionBackend(),
@@ -41,40 +44,42 @@ def parse_table(analiz_date, file_name):
                               line_scale=30,
                               pages='all',
                               copy_text=['h'],)
-    print("===================")
-    print(tables)
+    # print("===================")
+    # print(tables)
     array_table = []
     for tbl in tables:
         df = tbl.df
-        head_index = list(df.columns)
-        head = [df.at[0, value] for value in head_index]
-        head_dict = {}
+        head = [df.at[0, value] for value in list(df.columns)]
+        # Строим dict что бы знать под каким индексом колонка с каким наименованием
+        col_idx = {}
         for i, n in enumerate(head):
-            head_dict[head[i]] = i
+            col_idx[head[i]] = i
 
-        print("head_dict")
-        print(head_dict)
-        print(df)
+        # print("head_dict")
+        # print(head_dict)
+        # print(df)
+        # Идем по всей таблице исключая первую запись, т.к. она содержит наименование колонок
         for i in range(1, len(df.index)):
-            test_name = df.at[i, head_dict["Тест"]] if head_dict.get("Тест", "") != "" else ""
+            test_name = df.at[i, col_idx["Тест"]] if col_idx.get("Тест", "") != "" else ""
             if test_name != "":
                 array_table.append([
                     analiz_date,
-                    df.at[i, head_dict["Тест"]] if head_dict.get("Тест", "") != "" else "",
-                    df.at[i, head_dict["Результат"]] if head_dict.get("Результат", "") != "" else "",
-                    df.at[i, head_dict["Ед. изм."]] if head_dict.get("Ед. изм.", "") != "" else "",
-                    df.at[i, head_dict["Референсные значения"]] if head_dict.get("Референсные значения", "") != "" else ""
+                    df.at[i, col_idx["Тест"]] if col_idx.get("Тест", "") != "" else "",
+                    df.at[i, col_idx["Результат"]] if col_idx.get("Результат", "") != "" else "",
+                    df.at[i, col_idx["Ед. изм."]] if col_idx.get("Ед. изм.", "") != "" else "",
+                    df.at[i, col_idx["Референсные значения"]] if col_idx.get("Референсные значения", "") != "" else ""
                 ])
-    print(array_table)
+    # print(array_table)
     return array_table
 
+DATE_FORMAT = '%d.%m.%Y'
 
 def parsedate(str_with_date):
     date_pattern = r'\d{2}\.\d{2}\.\d{4}'
     match = re.search(date_pattern, str_with_date)
     if match:
         date = match.group()
-        return date
+        return datetime.strptime(date, DATE_FORMAT)
     return None
 
 
@@ -105,10 +110,37 @@ def convert_pdf(path_from):
     date_analiz_dic = []
     for file in pdf_list:
         date_analiz_dic.extend(open_pdf(file))
-    print(date_analiz_dic)
+    # print(date_analiz_dic)
     return date_analiz_dic
 
 # open_pdf(READABLE_PDF_PATH+"6912578239 (Антиоксиданты и ПОЛ).pdf")
 # open_pdf(READABLE_PDF_PATH+"6912580007 (Дисбактериоз).pdf")
 
-convert_pdf(READABLE_PDF_PATH)
+date_analiz_dic = convert_pdf(READABLE_PDF_PATH)
+
+
+dates_set = set(val[0] for val in date_analiz_dic)
+dates_set = sorted(dates_set)
+
+#формируем уникальный список тестов сохраняя их порядок, в котором они были прочитаны из таблиц
+test_set = set({});
+test_list = []
+for item in date_analiz_dic:
+    if(item[1] not in test_set):
+        test_set.add(item[1])
+        test_list.append(item[1])
+
+dates_col = [date.strftime(DATE_FORMAT) for date in dates_set]
+
+cols = dates_col + ["Ед. измерения", "Референсное значение"]
+
+df = pd.DataFrame(index=test_list, columns=cols)
+
+for item in date_analiz_dic:
+    df.at[item[1], item[0].strftime(DATE_FORMAT)] = item[2]
+    df.at[item[1], "Ед. измерения"] = item[3]
+    df.at[item[1], "Референсное значение"] = item[4]
+
+# print(df)
+
+df.to_excel('./result/output.xlsx')
