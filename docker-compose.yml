@@ -3,6 +3,8 @@ version: '3.4'
 services:
   clinicparser:
     image: clinicparser
+    volumes:
+      - ./readablepdf/:/readablepdf
     build:
       context: .
       dockerfile: ./Dockerfile

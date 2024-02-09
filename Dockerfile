@@ -1,5 +1,5 @@
 # Первый этап: подготовка среды
-FROM mirror.artifactory-jcr.krista.ru/python:3.11-slim  AS builder
+FROM mirror.artifactory-jcr.krista.ru/python:3.11  AS builder
 
 WORKDIR /workdir
 
@@ -16,6 +16,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+# Внутренний репозиторий с пакетами
+RUN echo "deb http://cascad.krista.ru:9999/debian/ bookworm main" > /etc/apt/sources.list
+RUN apt-get update && apt-get install -y --no-install-recommends gcc
+
 # Install pip requirements
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip wheel --no-cache-dir --no-deps --wheel-dir /workdir/wheels -r requirements.txt
@@ -23,7 +27,7 @@ RUN pip install --upgrade pip && pip wheel --no-cache-dir --no-deps --wheel-dir 
 
 # For more information, please refer to https://aka.ms/vscode-docker-python
 #FROM python:3.10-slim
-FROM mirror.artifactory-jcr.krista.ru/python:3.11-slim
+FROM mirror.artifactory-jcr.krista.ru/python:3.11
 
 WORKDIR /workdir
 
@@ -56,10 +60,11 @@ COPY --from=builder /workdir/wheels /wheels
 # Внутренний репозиторий с пакетами
 RUN echo "deb http://cascad.krista.ru:9999/debian/ bookworm main" > /etc/apt/sources.list
 
-#RUN apt-get clean && apt-get update && apt-get -y install ghostscript python3-tk
-RUN apt-get update && apt-get -y install ghostscript python3-tk
+RUN apt-get update
 
-# RUN apt-get update && apt-get install ghostscript python3-tk
+# camelot dependencies
+RUN apt-get install libgl1 -y
+RUN apt-get install -y --no-install-recommends ghostscript python3-tk ocrmypdf
 
 RUN pip install --upgrade pip && pip install --no-cache /wheels/*
 
@@ -69,5 +74,5 @@ RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /
 USER appuser
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-#CMD ["gunicorn", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "start:app"]
-CMD ["uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "start:app"]
+#CMD ["uvicorn", "app.start:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
