@@ -1,25 +1,15 @@
 ARG PLACE
 
 # Первый этап: подготовка среды
-FROM mirror.artifactory-jcr.krista.ru/python:3.11 AS builder
+FROM python:3.11 AS builder
 
 WORKDIR /workdir
-
-COPY ./ca_cert/cert.pem /usr/local/share/ca-certificates/ 
-
-RUN     update-ca-certificates -v &&\
-        pip config --global set global.index-url 'https://ntp-nexus3.krista.ru/repository/pypi-all/simple' &&\
-        pip config --global set global.cert /usr/local/share/ca-certificates/cert.pem  &&\
-        pip config --global set global.trusted-host ntp-nexus3.krista.ru
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
-
-# Внутренний репозиторий с пакетами
-RUN echo "deb http://cascad.krista.ru:9999/debian/ bookworm main" > /etc/apt/sources.list 
 
 RUN apt-get update && apt-get install -y --no-install-recommends gcc 
 
@@ -30,16 +20,9 @@ RUN pip install --upgrade pip && pip wheel --no-cache-dir --no-deps --wheel-dir 
 
 # For more information, please refer to https://aka.ms/vscode-docker-python
 #FROM python:3.10-slim
-FROM mirror.artifactory-jcr.krista.ru/python:3.11
+FROM python:3.11
 
 WORKDIR /workdir
-
-#COPY ./ca_cert/cert.pem /usr/local/share/ca-certificates/
-
-RUN     update-ca-certificates -v &&\
-        pip config --global set global.index-url 'https://ntp-nexus3.krista.ru/repository/pypi-all/simple' &&\
-        pip config --global set global.cert /usr/local/share/ca-certificates/cert.pem  &&\
-        pip config --global set global.trusted-host ntp-nexus3.krista.ru
 
 EXPOSE 8000
 
@@ -59,9 +42,6 @@ COPY . /workdir
 # скопировать все необходимые файлы в рабочую папку для сборки образа
 COPY --from=builder /workdir/wheels /wheels
 # COPY --from=builder /semantic-search/requirements.txt .
-
-# Внутренний репозиторий с пакетами
-RUN echo "deb http://cascad.krista.ru:9999/debian/ bookworm main" > /etc/apt/sources.list 
 
 RUN apt-get update
 

@@ -5,6 +5,12 @@ https://camelot-py.readthedocs.io/en/master/user/install.html
 Доп. зависимости
 https://camelot-py.readthedocs.io/en/master/user/install-deps.html#install-deps
 
+* Компиляция
+
+Что бы компилировать внутри кристы:
+--build-arg PLACE=krista
+
+docker-compose build --build-arg PLACE=krista up -d 
 
 * Интересная статья, где предлагается преобразовывать pdf  в картинку меньшими зависимостями
 
