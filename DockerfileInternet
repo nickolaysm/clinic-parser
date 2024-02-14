@@ -1,7 +1,7 @@
 ARG PLACE
 
 # Первый этап: подготовка среды
-FROM python:3.11 AS builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /workdir
 
@@ -20,7 +20,7 @@ RUN pip install --upgrade pip && pip wheel --no-cache-dir --no-deps --wheel-dir 
 
 # For more information, please refer to https://aka.ms/vscode-docker-python
 #FROM python:3.10-slim
-FROM python:3.11
+FROM python:3.11-slim
 
 WORKDIR /workdir
 

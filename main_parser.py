@@ -15,6 +15,15 @@ from minio import Minio
 # К колонках "Дата анализа х" собственно сами значения анализов по датам
 
 READABLE_PDF_PATH = "./readablepdf/"
+# Home
+ACCESS_KEY = "9oCxbGnvU3Paz1Sb0vNq"
+SECRETE_KEY = "5wcRpYHPeSvkpOvLl5odVPo66gCRMnpl2ARFwOBc"
+MINIO_ADR = "host.docker.internal:9000"
+# MINIO_ADR = "localhost:9000"
+
+# Work
+# ACCESS_KEY = "KGV9jzIWmf6pa3TJcmp9"
+# SECRETE_KEY = "2us5h6X0EeeLdfQ1NNqsmK0UEfCcYIhnPwq6EG6U"
 
 class AnalizTable:
     def __init__(self, date, name, value, measure, reference):
@@ -130,9 +139,9 @@ class ParserScript:
     # Начинаем их парсить
     def convert_pdf_from_s3(self):
         # client = Minio("host.docker.internal:9001",
-        client = Minio("localhost:9000",
-            access_key="KGV9jzIWmf6pa3TJcmp9",
-            secret_key="2us5h6X0EeeLdfQ1NNqsmK0UEfCcYIhnPwq6EG6U",
+        client = Minio(MINIO_ADR,
+            access_key=ACCESS_KEY,
+            secret_key=SECRETE_KEY,
             secure=False,
         )        
         bucket_name = "system"
@@ -187,7 +196,7 @@ class ParserScript:
         dates_set = sorted(dates_set)
 
         #формируем уникальный список тестов сохраняя их порядок, в котором они были прочитаны из таблиц
-        test_set = set({});
+        test_set = set({})
         test_list = []
         for item in date_analiz_dic:
             if(item[1] not in test_set):
@@ -210,9 +219,9 @@ class ParserScript:
         filepath = READABLE_PDF_PATH+'/'+str(uuid.uuid4())+'.xlsx';
         df.to_excel(filepath)
         
-        client = Minio("localhost:9000",
-            access_key="KGV9jzIWmf6pa3TJcmp9",
-            secret_key="2us5h6X0EeeLdfQ1NNqsmK0UEfCcYIhnPwq6EG6U",
+        client = Minio(MINIO_ADR,
+            access_key=ACCESS_KEY,
+            secret_key=SECRETE_KEY,
             secure=False,
         )
         
@@ -222,11 +231,11 @@ class ParserScript:
                 "system", "output.xlsx", io.BytesIO(content), len(content),
             )
             output_file.close
-        os.remove(filepath);
+        os.remove(filepath)
 
 
 
 ###########################################        
-print("start");
-parse_script = ParserScript();
-parse_script.main();
+print("start")
+parse_script = ParserScript()
+parse_script.main()
