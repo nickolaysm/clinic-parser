@@ -5,6 +5,8 @@ import re
 import camelot
 import pandas as pd
 import uuid
+import io
+from minio import Minio
 
 # Библиотека ищет в заданном каталоге pdf файлы от ЭндоМедЛаб с текстом
 # Вытаскивает текст pdf и складывает результаты анализов в pandas DataFrame
@@ -12,7 +14,7 @@ import uuid
 # "Название анализа" "Дата анализа 1" "Дата анализа 2" ... "Референсное значение"
 # К колонках "Дата анализа х" собственно сами значения анализов по датам
 
-READABLE_PDF_PATH = "/readablepdf/"
+READABLE_PDF_PATH = "./readablepdf/"
 
 class AnalizTable:
     def __init__(self, date, name, value, measure, reference):
@@ -101,11 +103,8 @@ class ParserScript:
 
     TABLE_IDENT = ["Тест", "Результат", "Ед. изм.", "Референсные значения", "Откл."]
 
-
-    # Разбирает один pdf
-    # Возвращает dic где ключем является дата взятия анализов, а значением массив из анализов
-    def open_pdf(self, file_path):
-        doc = fitz.open(file_path)
+    # Поиск даты поступления образца
+    def find_entrance_date(self, doc):
         text = []
         for page_num in range(doc.page_count):
             page = doc.load_page(page_num)
@@ -115,10 +114,57 @@ class ParserScript:
         for line in text:
             if "Дата поступления образца" in line:
                 date = self.parsedate(line)
+        return date        
+    
+    # Разбирает один pdf по локальному пути
+    # Возвращает dic где ключем является дата взятия анализов, а значением массив из анализов
+    def open_pdf(self, file_path):
+        doc = fitz.open(file_path)
+        date = self.find_entrance_date(doc)
+        print("Дата поступления образца:" + str(date))
         # разбор таблиц
         return self.parse_table(date, file_path)
 
 
+    # Выкачиваем все документы из minio
+    # Начинаем их парсить
+    def convert_pdf_from_s3(self):
+        # client = Minio("host.docker.internal:9001",
+        client = Minio("localhost:9000",
+            access_key="KGV9jzIWmf6pa3TJcmp9",
+            secret_key="2us5h6X0EeeLdfQ1NNqsmK0UEfCcYIhnPwq6EG6U",
+            secure=False,
+        )        
+        bucket_name = "system"
+        objects = client.list_objects(bucket_name)
+        pdf_list = []
+        for obj in objects:
+            print(obj.object_name)
+            if(obj.object_name != "output.xlsx"):
+                pdf_list.append(obj)                
+        
+        date_analiz_dic = []
+        for pdf in pdf_list:
+            try:
+                response = client.get_object(bucket_name, pdf.object_name)
+                # docbytes = response.data;
+                # doc = fitz.open(stream=docbytes)
+                # date = self.find_entrance_date(doc)
+                # print("Дата поступления образца:" + str(date))
+                
+                filepath = "./" + pdf.object_name + ".pdf";
+                with open(filepath, 'wb') as temp_file:
+                    try:
+                        temp_file.write(response.data)
+                    finally:
+                        temp_file.close
+                    date_analiz_dic.extend( self.open_pdf(filepath) )
+                os.remove(filepath)
+            finally:
+                response.close()
+                response.release_conn()
+        return date_analiz_dic
+        
     # Разбирает все pdf лежащие по пути и превращает их в DataFrame
     def convert_pdf(self, path_from):
         pdf_list = [READABLE_PDF_PATH+name for name in os.listdir(path=READABLE_PDF_PATH) if name.lower().endswith('.pdf')]
@@ -133,9 +179,9 @@ class ParserScript:
 
         # open_pdf(READABLE_PDF_PATH+"6912578239 (Антиоксиданты и ПОЛ).pdf")
         # open_pdf(READABLE_PDF_PATH+"6912580007 (Дисбактериоз).pdf")
-
-        date_analiz_dic = self.convert_pdf(READABLE_PDF_PATH)
-
+        
+        # date_analiz_dic = self.convert_pdf(READABLE_PDF_PATH)
+        date_analiz_dic = self.convert_pdf_from_s3()
 
         dates_set = set(val[0] for val in date_analiz_dic)
         dates_set = sorted(dates_set)
@@ -161,4 +207,26 @@ class ParserScript:
 
         # print(df)
 
-        df.to_excel(READABLE_PDF_PATH+'/output.xlsx')
+        filepath = READABLE_PDF_PATH+'/'+str(uuid.uuid4())+'.xlsx';
+        df.to_excel(filepath)
+        
+        client = Minio("localhost:9000",
+            access_key="KGV9jzIWmf6pa3TJcmp9",
+            secret_key="2us5h6X0EeeLdfQ1NNqsmK0UEfCcYIhnPwq6EG6U",
+            secure=False,
+        )
+        
+        with open(filepath, 'rb') as output_file:
+            content = output_file.read()
+            client.put_object(
+                "system", "output.xlsx", io.BytesIO(content), len(content),
+            )
+            output_file.close
+        os.remove(filepath);
+
+
+
+###########################################        
+print("start");
+parse_script = ParserScript();
+parse_script.main();

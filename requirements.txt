@@ -11,3 +11,4 @@ frontend
 pandas
 pytesseract
 pillow
+minio
