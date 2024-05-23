@@ -12,3 +12,4 @@ pandas
 pytesseract
 pillow
 minio
+transformers

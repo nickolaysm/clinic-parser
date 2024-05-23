@@ -16,14 +16,14 @@ from minio import Minio
 
 READABLE_PDF_PATH = "./readablepdf/"
 # Home
-ACCESS_KEY = "9oCxbGnvU3Paz1Sb0vNq"
-SECRETE_KEY = "5wcRpYHPeSvkpOvLl5odVPo66gCRMnpl2ARFwOBc"
-MINIO_ADR = "host.docker.internal:9000"
-# MINIO_ADR = "localhost:9000"
+# ACCESS_KEY = "9oCxbGnvU3Paz1Sb0vNq"
+# SECRETE_KEY = "5wcRpYHPeSvkpOvLl5odVPo66gCRMnpl2ARFwOBc"
+# MINIO_ADR = "host.docker.internal:9000"
+MINIO_ADR = "localhost:9000"
 
 # Work
-# ACCESS_KEY = "KGV9jzIWmf6pa3TJcmp9"
-# SECRETE_KEY = "2us5h6X0EeeLdfQ1NNqsmK0UEfCcYIhnPwq6EG6U"
+ACCESS_KEY = "KGV9jzIWmf6pa3TJcmp9"
+SECRETE_KEY = "2us5h6X0EeeLdfQ1NNqsmK0UEfCcYIhnPwq6EG6U"
 
 class AnalizTable:
     def __init__(self, date, name, value, measure, reference):
@@ -53,7 +53,8 @@ class ParserScript:
         print("=================== parse_table ==============")
         print("===: "+ file_name)
         tables = camelot.read_pdf(file_name,
-                                backend=ConversionBackend(),
+                                #backend=ConversionBackend(),
+                                backend="ghostscript",
                                 strip_text='\n',
                                 line_scale=30,
                                 pages='all',

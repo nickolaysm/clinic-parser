@@ -42,3 +42,7 @@ pip install --force-reinstall -v "Pillow==9.5.0"
 * Отличная статья про OCR
 
 https://medium.com/social-impact-analytics/extract-text-from-unsearchable-pdfs-for-data-analysis-using-python-a6a2ca0866dd
+
+* Очень подробная и качественная статья как разобрать pdf (текст, изображения, таблицы)
+
+https://habr.com/ru/companies/ruvds/articles/765246/

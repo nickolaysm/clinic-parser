@@ -68,6 +68,8 @@ RUN apt-get update
 # camelot dependencies
 RUN apt-get install libgl1 -y
 RUN apt-get install -y --no-install-recommends ghostscript python3-tk ocrmypdf
+# tesseract dependencies
+RUN apt-get install tesseract-ocr libtesseract-dev tesseract-ocr-rus
 
 RUN pip install --upgrade pip && pip install --no-cache /wheels/*
 
