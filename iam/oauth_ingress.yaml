@@ -1,0 +1,34 @@
+# Тестовый файл инициализации ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+
+    # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.auth.svc.cluster.local:4180/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "http://$host:32629/oauth2/start?rd=$escaped_request_uri"
+
+    # nginx.ingress.kubernetes.io/auth-signin: http://auth.local.com/oauth2/start?rd=https%3A%2F%2F$host$request_uri
+    nginx.ingress.kubernetes.io/auth-url: http://auth.local.com/oauth2/auth
+
+
+    # nginx.ingress.kubernetes.io/auth-signin: https://$host/oauth2/start?rd=$escaped_request_uri
+    # nginx.ingress.kubernetes.io/auth-url: https://$host/oauth2/auth
+spec:
+  rules:
+    - host: local.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              # service:
+              #   name: keycloak
+              #   port: 
+              #     number: 8080
+              service:
+                name: name-rec
+                port: 
+                  number: 8000

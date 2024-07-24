@@ -1,3 +1,29 @@
 # Статья по настройке KeyCloack
 
 https://habr.com/ru/articles/716232/
+
+# Проброс порта из minilube при его старте
+
+minikube start --addons=ingress --ports=80:80 
+
+если при первом старте, не был узкан прорт, то просто стартануть с новыми параметрами недостаточно. Нужно сначала удалить образ
+
+minikube delete  
+
+# Регистрация секрета regcred для доступа к репозитарию докеров
+
+kubectl create secret docker-registry regcred --docker-server=mirror.artifactory-jcr.krista.ru --docker-username=nsmirnov --docker-password=<<доменный пароль>> --docker-email=nsmirnov@krista.ru
+
+
+
+# Доп 
+
+sudo cp C:/Users/nsmirnov/sysadmin@krista.ru_2022.crt /etc/docker/certs.d/internal.docker.registry/
+
+docker pull krista-services.artifactory-jcr.krista.ru/artifactory/krista-services/platform/ai/ocr/name_recognition_service/name_recognition_service:latest
+
+
+kubectl create deployment name-service --image=krista-services.artifactory-jcr.krista.ru/artifactory/krista-services/platform/ai/ocr/name_recognition_service/name_recognition_service:latest
+
+
+kubectl expose deployment name-service --type=NodePort --port=8000

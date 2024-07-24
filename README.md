@@ -46,3 +46,10 @@ https://medium.com/social-impact-analytics/extract-text-from-unsearchable-pdfs-f
 * Очень подробная и качественная статья как разобрать pdf (текст, изображения, таблицы)
 
 https://habr.com/ru/companies/ruvds/articles/765246/
+
+* Как настроить keycloak и oauthproxy
+
+https://habr.com/ru/articles/779924/
+
+
+minikube start --vm-driver=hyperv  --no-vtx-check
